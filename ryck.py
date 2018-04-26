@@ -11,7 +11,7 @@
 ################################################################################
 #
 #   ryck.py
-#   https://github.com/johanbluecreek/reddytt
+#   https://github.com/johanbluecreek/ryck
 #
 __version__ = "0.0.1"
 #
