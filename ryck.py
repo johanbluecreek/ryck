@@ -31,6 +31,12 @@ __version__ = "0.0.1"
 import requests
 import json
 
+import copy
+
+import random
+
+import subprocess
+
 ################################################################################
       ####### #     # #     #  #####  ####### ### ####### #     #  #####
       #       #     # ##    # #     #    #     #  #     # ##    # #     #
@@ -65,13 +71,12 @@ if __name__ == '__main__':
     # construct header
     header = {'Client-ID': client_id}
 
-    # Set preferences
+    # Set preferences (TODO: Move to argparse)
     lang = 'en'
     limit = '100'
     game = 'irl'
-    #TODO: to be handled by argparse in the future.
 
-    # Construct the link to call
+    # Construct the link to call (TODO: Move to function)
     base_link = 'https://api.twitch.tv/kraken/streams'
 
     call_link = base_link + '?'
@@ -86,4 +91,27 @@ if __name__ == '__main__':
     r = requests.get(call_link, headers=header)
     data = r.json()
 
-    print(data.keys())
+    # Store what we want to keep
+    # and keep calling until all streams are fetched.
+    streams = copy.copy(data['streams'])
+    while len(data['streams']) == int(limit):
+        r = requests.get(data['_links']['next'], headers=header)
+        data = r.json()
+
+        streams += copy.copy(data['streams'])
+
+    random.shuffle(streams)
+
+    for stream in streams:
+        stream_name = stream['channel']['name']
+        stream_status = stream['channel']['status']
+        stream_link = stream['channel']['url']
+        print('Playing: ' + stream_name)
+        print('Playing: ' + stream_status)
+        p = subprocess.Popen(
+            [
+                'mpv',
+                stream_link
+            ]
+        , shell=False)
+        p.communicate()
