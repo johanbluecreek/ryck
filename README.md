@@ -26,3 +26,5 @@ Generally this is suppose to be quite featureless, but some small goodies should
 * proper keys (borrow from [reddytt](https://github.com/johanbluecreek/reddytt)) for exiting
 * saving option to remember a good stream
 * bundle the client-ID somehow
+* Perhaps integrate initiating irssi and jump into the chat
+* An input key in mpv to open the stream-page (to join chat or so)
