@@ -37,6 +37,8 @@ import random
 
 import subprocess
 
+import sys
+
 ################################################################################
       ####### #     # #     #  #####  ####### ### ####### #     #  #####
       #       #     # ##    # #     #    #     #  #     # ##    # #     #
@@ -115,3 +117,6 @@ if __name__ == '__main__':
             ]
         , shell=False)
         p.communicate()
+
+        if p.returncode == 4:
+            sys.exit()
