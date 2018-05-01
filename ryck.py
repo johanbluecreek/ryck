@@ -38,6 +38,7 @@ import random
 import subprocess
 
 import sys
+import os
 
 import base64
 
@@ -77,6 +78,16 @@ def construct_link(lang, game, limit):
 
     return call_link
 
+def create_input(work_dir):
+    input_file = work_dir + "/input.conf"
+
+    with open(input_file, 'w') as f:
+        f.write('> quit 0\n')
+        f.write('q quit 4\n')
+        f.write('R run "/bin/bash" "-c" "echo \\\"${path}\\\" >> ~/.ryck/remember"\n')
+        f.write('i show-text "${title}"\n')
+        f.write('Ctrl+o run "/bin/bash" "-c" "xdg-open \\\"${path}\\\""\n')
+
 ################################################################################
                           #     #    #    ### #     #
                           ##   ##   # #    #  ##    #
@@ -88,6 +99,16 @@ def construct_link(lang, game, limit):
 ################################################################################
 
 if __name__ == '__main__':
+
+    # Build a working env for ryck
+    work_dir = os.environ['HOME'] + "/.ryck"
+    if not os.path.isdir(work_dir):
+        os.mkdir(work_dir)
+
+    input_file = work_dir + "/input.conf"
+    gen_input = True
+    if gen_input:
+        create_input(work_dir)
 
     # Set preferences (TODO: Move to argparse)
     lang = 'en'
@@ -161,7 +182,9 @@ if __name__ == '__main__':
         p = subprocess.Popen(
             [
                 'mpv',
-                stream_link
+                stream_link,
+                '--input-conf=%s' % input_file,
+                '--title=\"%s\"' % stream_status
             ]
         , shell=False)
         p.communicate()
