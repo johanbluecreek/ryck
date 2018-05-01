@@ -68,6 +68,7 @@ def construct_link(lang, game, limit):
     # start adding options
     call_link = base_link + '?'
     # language
+    # XXX: There is also a 'broadcaster_language', but 'language' seems accurate enough
     call_link += 'language=' + lang + '&'
     # game
     call_link += 'game=' + game + '&'
@@ -88,6 +89,55 @@ def create_input(work_dir):
         f.write('i show-text "${title}"\n')
         f.write('Ctrl+o run "/bin/bash" "-c" "xdg-open \\\"${path}\\\""\n')
 
+def allowed_game(game):
+    # Because we do not want the 'game' option to be misused (like using this
+    # script to call the twitch-api in an unintended way) we will have to check
+    # that the game given is an acceptable one. So here we list all the allowed
+    # games, and verify that the given game name is in that list.
+    # This is annying, because people would have to request having their games
+    # added but with twitch's way of handling things, this is the more
+    # comfrotable for me.
+    supported_games = {'',
+        'Anna',
+        'Casino',
+        'Counter-Strike: Global Offensive',
+        'Crossout',
+        'Dead by Daylight',
+        'Destiny 2',
+        'Dota 2',
+        'Escape From Tarkov',
+        'FIFA 18',
+        'Fallout: New Vegas',
+        'Fortnite',
+        'Frostpunk',
+        'God of War',
+        'Grand Theft Auto V',
+        'Hand Simulator',
+        'Hearthstone',
+        'IRL',
+        'Jikkyou Powerful Pro Yakyuu 2018',
+        'League of Legends',
+        'Magic: The Gathering',
+        'Murderous Pursuits',
+        'Music',
+        'Overwatch',
+        "PLAYERUNKNOWN'S BATTLEGROUNDS",
+        'Pillars of Eternity',
+        'Poker',
+        'Rust',
+        "Sherlock Holmes: The Devil's Daughter",
+        'StarCraft II',
+        'Terraria',
+        'Total War Saga: Thrones of Britannia',
+        'World of Tanks',
+        'World of Warcraft'
+    }
+    #TODO: Also figure out how to escape all the spaces ('+' instead of spaces)
+    # to get these to a acceptable url form. Ex: 'Pillars of Eternity' ->
+    # 'pillars+of+eternity'
+
+    return game in supported_games
+
 ################################################################################
                           #     #    #    ### #     #
                           ##   ##   # #    #  ##    #
@@ -105,6 +155,7 @@ if __name__ == '__main__':
     if not os.path.isdir(work_dir):
         os.mkdir(work_dir)
 
+    # Generate input file (TODO: move to argparse)
     input_file = work_dir + "/input.conf"
     gen_input = True
     if gen_input:
@@ -116,7 +167,7 @@ if __name__ == '__main__':
     maximum = 0
     sorting = 'random'
 
-    # Limit (TODO: Change this to a maximum set by user/default)
+    # Hard coded limit of what the twitch-api accepts
     limit = 100
 
     # Headers to auth with twitch-api
