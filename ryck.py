@@ -13,7 +13,7 @@
 #   ryck.py
 #   https://github.com/johanbluecreek/ryck
 #
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 #
 ################################################################################
 ################################################################################
@@ -39,6 +39,8 @@ import subprocess
 
 import sys
 
+import base64
+
 ################################################################################
       ####### #     # #     #  #####  ####### ### ####### #     #  #####
       #       #     # ##    # #     #    #     #  #     # ##    # #     #
@@ -50,11 +52,31 @@ import sys
 ################################################################################
 
 def get_clientID():
-    client_id = ''
-    with open('./client_id.txt', 'r') as f:
-        client_id = f.readline()
-    client_id = client_id.strip()
+    client_id = 'YTFoZGY2Zm4xYmNpdW0wZHUxcXJ1aGx1OGd4N2I0'
+    client_id = base64.b64decode(client_id.encode()).decode()
     return client_id
+
+def get_headers():
+    client_id = get_clientID()
+    headers = {'Client-ID': client_id}
+    return headers
+
+def construct_link(lang, game):
+    base_link = 'https://api.twitch.tv/kraken/streams'
+    limit = '100'
+
+    # start adding options
+    call_link = base_link + '?'
+    # language
+    call_link += 'language=' + lang + '&'
+    # game
+    call_link += 'game=' + game + '&'
+    # limit
+    call_link += 'limit=' + limit + '&'
+    # end the link
+    call_link += 'stream_type=live'
+
+    return call_link
 
 ################################################################################
                           #     #    #    ### #     #
@@ -68,36 +90,25 @@ def get_clientID():
 
 if __name__ == '__main__':
 
-    # Fetch Client-ID from file
-    client_id = get_clientID()
-    # construct header
-    header = {'Client-ID': client_id}
-
     # Set preferences (TODO: Move to argparse)
     lang = 'en'
-    limit = '100'
     game = 'irl'
 
-    # Construct the link to call (TODO: Move to function)
-    base_link = 'https://api.twitch.tv/kraken/streams'
+    # Limit (TODO: Change this to a maximum set by user/default)
+    limit = '100'
 
-    call_link = base_link + '?'
-
-    call_link += 'language=' + lang + '&'
-    call_link += 'game=' + game + '&'
-    call_link += 'limit=' + limit + '&'
-
-    call_link += 'stream_type=live'
+    call_link = construct_link(lang, game)
 
     # Perform the call
-    r = requests.get(call_link, headers=header)
+    headers = get_headers()
+    r = requests.get(call_link, headers=headers)
     data = r.json()
 
     # Store what we want to keep
     # and keep calling until all streams are fetched.
     streams = copy.copy(data['streams'])
     while len(data['streams']) == int(limit):
-        r = requests.get(data['_links']['next'], headers=header)
+        r = requests.get(data['_links']['next'], headers=headers)
         data = r.json()
 
         streams += copy.copy(data['streams'])
