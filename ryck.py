@@ -167,6 +167,35 @@ if __name__ == '__main__':
     maximum = 0
     sorting = 'random'
 
+    # Play only memorised streamers (TODO: move to argparse)
+    remember_file = work_dir + "/remember"
+    play_memory = False
+    memorised_streams = []
+    if play_memory:
+        if os.path.isfile(remember_file):
+            with open(remember_file, 'r') as f:
+                lines = f.readlines()
+                for line in lines:
+                    memorised_streams.append(line)
+            for stream in memorised_streams:
+                p = subprocess.Popen(
+                    [
+                        'mpv',
+                        stream,
+                        '--input-conf=%s' % input_file,
+                        '--title=\"%s\"' % stream
+                    ]
+                , shell=False)
+                p.communicate()
+
+                if p.returncode == 4:
+                    sys.exit()
+            print("Ryck: All memorised links consumed. Exiting.")
+            sys.exit()
+        else:
+            print("Ryck: No `remember` file found. Exiting.")
+            sys.exit()
+
     # Hard coded limit of what the twitch-api accepts
     limit = 100
 
@@ -228,8 +257,10 @@ if __name__ == '__main__':
         stream_name = stream['channel']['name']
         stream_status = stream['channel']['status']
         stream_link = stream['channel']['url']
-        print('Playing: ' + stream_name)
-        print('Playing: ' + stream_status)
+        print('')
+        print('Ryck now playing: ' + stream_name)
+        print('                  ' + stream_status)
+        print('')
         p = subprocess.Popen(
             [
                 'mpv',
