@@ -1,18 +1,18 @@
 # ryck
 
-Wanna try out watching some twitch streamers without any effort? You are in the right place.
+You go onto [twitch.tv](https://twitch.tv/), your usual streamers are not there, or you have not found one you like yet, you keep on aimlessly clicking to find the one streamer to waste your time on. Not any more! `ryck.py` aims to automate this process for you! Run it, and streams will start flowing! With the press of a single key you go to the next.
+
+This project is still in the early stages, so not all features have yet been implemented.
 
 ## Usage
 
-I'm unsure of the accurate way to bundle twitch API client-IDs, so for now you have to get one yourself. So start off heading over to [dev.twitch.tv](https://dev.twitch.tv/), register an account, press after that find a 'Register an App'-button, and fill in name for you app with whatever and the redirect-URI with `https://twitchapps.com/tokengen/` (which [this repo]() suggests ¯\\_(ツ)_/¯), then find your `Client-ID` and paste it into a file `client_id.txt` in the same folder as `ryck.py` is in.
-
-At this stage, which is past the stage of seeing-that-this-was-way-too-much-effort-and-abandoning-this-project-forever, you are(/would be) done, and
+There is basically nothing to do but to run the script at this point
 
 ```
 $ ./ryck.py
 ```
 
-will start playing twitch streams from 'IRL' with the english language. This is all hard-coded, so change the code if you wanna change those defaults.
+which will start playing all currently live twitch streams under 'IRL' with the English language. This is all hard-coded, so change the code if you wanna change those defaults.
 
 ## Todo/feature wish-list
 
@@ -23,6 +23,7 @@ Generally this is suppose to be quite featureless, but some small goodies should
     - figure out all the language names
   - to change 'game'
     - figure out all the 'game' names
+  - Sorting option (now just random, but also popularity, others?)
 * proper keys (borrow from [reddytt](https://github.com/johanbluecreek/reddytt)) for exiting
 * saving option to remember a good stream
 * bundle the client-ID somehow
