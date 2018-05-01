@@ -12,7 +12,7 @@ There is basically nothing to do but to run the script at this point
 $ ./ryck.py
 ```
 
-which will start playing all currently live twitch streams under 'IRL' with the English language. This is all hard-coded, so change the code if you wanna change those defaults.
+which will start playing all currently live twitch streams under 'IRL' with the English language. This is all hard-coded, so change the code if you wanna change those defaults. Press `q` to go to the next, and `Ctrl+c` to stop.
 
 ## Todo/feature wish-list
 
