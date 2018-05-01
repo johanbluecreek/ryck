@@ -61,9 +61,8 @@ def get_headers():
     headers = {'Client-ID': client_id}
     return headers
 
-def construct_link(lang, game):
+def construct_link(lang, game, limit):
     base_link = 'https://api.twitch.tv/kraken/streams'
-    limit = '100'
 
     # start adding options
     call_link = base_link + '?'
@@ -93,27 +92,65 @@ if __name__ == '__main__':
     # Set preferences (TODO: Move to argparse)
     lang = 'en'
     game = 'irl'
+    maximum = 0
+    sorting = 'random'
 
     # Limit (TODO: Change this to a maximum set by user/default)
-    limit = '100'
+    limit = 100
 
-    call_link = construct_link(lang, game)
-
-    # Perform the call
+    # Headers to auth with twitch-api
     headers = get_headers()
-    r = requests.get(call_link, headers=headers)
-    data = r.json()
 
-    # Store what we want to keep
-    # and keep calling until all streams are fetched.
-    streams = copy.copy(data['streams'])
-    while len(data['streams']) == int(limit):
-        r = requests.get(data['_links']['next'], headers=headers)
+    # Fetch all the streams
+    streams = []
+    if maximum <= limit and maximum > 0:
+
+        # For a small number of streams, just get them all at once
+
+        call_link = construct_link(lang, game, str(maximum))
+
+        r = requests.get(call_link, headers=headers)
         data = r.json()
 
         streams += copy.copy(data['streams'])
 
-    random.shuffle(streams)
+    elif maximum > limit:
+
+        # If larger than limit we have to make several calls
+
+        call_link = construct_link(lang, game, str(limit))
+
+        r = requests.get(call_link, headers=headers)
+        data = r.json()
+
+        streams += copy.copy(data['streams'])
+
+        while len(streams) <= maximum and len(data['streams']) == limit:
+            r = requests.get(data['_links']['next'], headers=headers)
+            data = r.json()
+
+            streams += copy.copy(data['streams'][:maximum-len(streams)])
+
+    else:
+
+        # Else, just fetch them all
+
+        call_link = construct_link(lang, game, str(limit))
+
+        r = requests.get(call_link, headers=headers)
+        data = r.json()
+
+        streams += copy.copy(data['streams'])
+
+        while len(data['streams']) == limit:
+            r = requests.get(data['_links']['next'], headers=headers)
+            data = r.json()
+
+            streams += copy.copy(data['streams'])
+
+    # Then we proceed to sort the streams (popularity/viewers is default sorting)
+    if sorting == 'random':
+        random.shuffle(streams)
 
     for stream in streams:
         stream_name = stream['channel']['name']
