@@ -13,7 +13,7 @@
 #   ryck.py
 #   https://github.com/johanbluecreek/ryck
 #
-__version__ = "0.0.5"
+__version__ = "0.0.6"
 #
 ################################################################################
 ################################################################################
@@ -41,6 +41,10 @@ import sys
 import os
 
 import base64
+
+from datetime import date
+import time
+from shutil import copyfile
 
 ################################################################################
       ####### #     # #     #  #####  ####### ### ####### #     #  #####
@@ -81,6 +85,11 @@ def construct_link(lang, game, limit):
 
 def create_input(work_dir):
     input_file = work_dir + "/input.conf"
+
+    if os.path.isfile(input_file):
+        backup_file = input_file + "-" + date.today().isoformat() + "-" + str(int(time.time()))
+        print("Ryck: Creating backup of old `input.conf`: %s" % backup_file)
+        copyfile(input_file, backup_file)
 
     with open(input_file, 'w') as f:
         f.write('> quit 0\n')
@@ -139,37 +148,25 @@ def allowed_game(game):
     return game in supported_games
 
 ################################################################################
-                          #     #    #    ### #     #
-                          ##   ##   # #    #  ##    #
-                          # # # #  #   #   #  # #   #
-                          #  #  # #     #  #  #  #  #
-                          #     # #######  #  #   # #
-                          #     # #     #  #  #    ##
-                          #     # #     # ### #     #
+                #     #  #####  #######    #     #####  #######
+                #     # #     # #         # #   #     # #
+                #     # #       #        #   #  #       #
+                #     #  #####  #####   #     # #  #### #####
+                #     #       # #       ####### #     # #
+                #     # #     # #       #     # #     # #
+                 #####   #####  ####### #     #  #####  #######
 ################################################################################
 
-if __name__ == '__main__':
 
-    # Build a working env for ryck
-    work_dir = os.environ['HOME'] + "/.ryck"
-    if not os.path.isdir(work_dir):
-        os.mkdir(work_dir)
+#    # ###### #    #  ####  #####  #   #
+##  ## #      ##  ## #    # #    #  # #
+# ## # #####  # ## # #    # #    #   #
+#    # #      #    # #    # #####    #
+#    # #      #    # #    # #   #    #
+#    # ###### #    #  ####  #    #   #
 
-    # Generate input file (TODO: move to argparse)
-    input_file = work_dir + "/input.conf"
-    gen_input = True
-    if gen_input:
-        create_input(work_dir)
-
-    # Set preferences (TODO: Move to argparse)
-    lang = 'en'
-    game = 'irl'
-    maximum = 0
-    sorting = 'random'
-
-    # Play only memorised streamers (TODO: move to argparse)
+def play_remember(work_dir, input_file):
     remember_file = work_dir + "/remember"
-    play_memory = False
     memorised_streams = []
     if play_memory:
         if os.path.isfile(remember_file):
@@ -196,6 +193,15 @@ if __name__ == '__main__':
             print("Ryck: No `remember` file found. Exiting.")
             sys.exit()
 
+
+#####  ###### ######   ##   #    # #      #####
+#    # #      #       #  #  #    # #        #
+#    # #####  #####  #    # #    # #        #
+#    # #      #      ###### #    # #        #
+#    # #      #      #    # #    # #        #
+#####  ###### #      #    #  ####  ######   #
+
+def play_default(input_file, lang, game, maximum, sorting):
     # Hard coded limit of what the twitch-api accepts
     limit = 100
 
@@ -273,3 +279,42 @@ if __name__ == '__main__':
 
         if p.returncode == 4:
             sys.exit()
+
+################################################################################
+                          #     #    #    ### #     #
+                          ##   ##   # #    #  ##    #
+                          # # # #  #   #   #  # #   #
+                          #  #  # #     #  #  #  #  #
+                          #     # #######  #  #   # #
+                          #     # #     #  #  #    ##
+                          #     # #     # ### #     #
+################################################################################
+
+if __name__ == '__main__':
+
+    # Build a working env for ryck
+    work_dir = os.environ['HOME'] + "/.ryck"
+    if not os.path.isdir(work_dir):
+        os.mkdir(work_dir)
+
+    # Generate input file if non exist
+    input_file = work_dir + "/input.conf"
+    if not os.path.isfile(input_file):
+        create_input(work_dir)
+
+    # Set preferences (TODO: Move to argparse)
+    lang = 'en'
+    game = 'irl'
+    maximum = 0
+    sorting = 'random'
+
+    # Go through all use cases (TODO: move to argparse)
+    play_memory = False
+    gen_input = True
+
+    if play_memory:
+        play_remember(work_dir, input_file)
+    elif gen_input:
+        create_input(work_dir)
+    else:
+        play_default(input_file, lang, game, maximum, sorting)
