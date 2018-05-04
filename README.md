@@ -47,6 +47,7 @@ Ryck will generate a `input.conf`-file (to be stored in `~/.ryck/`) and override
  * `q`: Saves and **q**uits remaining links
  * `>`: Plays next video
  * `R`: **R**emembers stream link in `~/.ryck/remember` (plain text)
+ * `X`: Link is e**x**cluded, and will no longer appear. (`~/.ryck/exclude`, plain text)
  * `i`: Prints the **i**nfo (streamer's "status") in mpv
  * `Ctrl+o`: Video link is **o**pened in default browser (using `xdg-open`)
 
@@ -56,4 +57,3 @@ Generally this is suppose to be quite featureless, but some small goodies should
 
 * Perhaps integrate initiating irssi and jump into the chat
 * add more languages
-* add more games

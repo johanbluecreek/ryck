@@ -13,7 +13,7 @@
 #   ryck.py
 #   https://github.com/johanbluecreek/ryck
 #
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 #
 ################################################################################
 ################################################################################
@@ -99,6 +99,7 @@ def create_input(work_dir):
         f.write('R run "/bin/bash" "-c" "echo \\\"${path}\\\" >> ~/.ryck/remember"\n')
         f.write('i show-text "${title}"\n')
         f.write('Ctrl+o run "/bin/bash" "-c" "xdg-open \\\"${path}\\\""\n')
+        f.write('X quit 8')
 
 def known_games():
 
@@ -145,6 +146,7 @@ def known_games():
 
 def known_langs():
 
+    #XXX: there is no way of doing this properly. Russians appear to select broadcaster_language in the opposite way as swedish streamers do. Whatever you do, you will miss streams.
     langs = {'English': 'en', 'Swedish': 'sv'}
 
     print("Ryck: You can try which every you want, but these are the ones that has been known to work:\n")
@@ -205,12 +207,21 @@ def play_remember(work_dir, input_file, mpv_args):
 #    # #      #      #    # #    # #        #
 #####  ###### #      #    #  ####  ######   #
 
-def play_default(input_file, lang, game, maximum, sorting, mpv_args):
+def play_default(work_dir, input_file, lang, game, maximum, minimum, sorting, mpv_args):
     # Hard coded limit of what the twitch-api accepts
     limit = 100
 
     # Headers to auth with twitch-api
     headers = get_headers()
+
+    # Create a list of the excluded streams
+    exclusion_file = work_dir + "/exclude"
+    excluded_streams = []
+    if os.path.isfile(exclusion_file):
+        with open(exclusion_file, 'r') as f:
+            lines = f.readlines()
+            for line in lines:
+                excluded_streams.append(line)
 
     # Fetch all the streams
     streams = []
@@ -236,7 +247,7 @@ def play_default(input_file, lang, game, maximum, sorting, mpv_args):
 
         streams += copy.copy(data['streams'])
 
-        while len(streams) <= maximum and len(data['streams']) == limit:
+        while len(streams) <= maximum and len(data['streams']) == limit and data['streams'][-1]['viewers'] > minimum:
             r = requests.get(data['_links']['next'], headers=headers)
             data = r.json()
 
@@ -253,36 +264,57 @@ def play_default(input_file, lang, game, maximum, sorting, mpv_args):
 
         streams += copy.copy(data['streams'])
 
-        while len(data['streams']) == limit:
+        while len(data['streams']) == limit and data['streams'][-1]['viewers'] > minimum:
             r = requests.get(data['_links']['next'], headers=headers)
             data = r.json()
 
             streams += copy.copy(data['streams'])
 
+    if minimum > 0:
+        new_streams = []
+        for stream in streams:
+            if stream['viewers'] >= minimum:
+                new_streams.append(stream)
+        streams = new_streams
+
     # Then we proceed to sort the streams (popularity/viewers is default sorting)
     if sorting == 'random':
         random.shuffle(streams)
 
+    # Then we play
+    left = len(streams)
     for stream in streams:
-        stream_name = stream['channel']['name']
-        stream_status = stream['channel']['status']
-        stream_link = stream['channel']['url']
-        print('')
-        print('Ryck now playing: ' + stream_name)
-        print('                  ' + stream_status)
-        print('')
-        p = subprocess.Popen(
-            [
-                'mpv',
-                stream_link,
-                '--input-conf=%s' % input_file,
-                '--title=\"%s\"' % stream_status
-            ] + mpv_args
-        , shell=False)
-        p.communicate()
 
-        if p.returncode == 4:
-            sys.exit()
+        print("Ryck: ", left)
+        left -= 1
+
+        if stream['channel']['url'] in excluded_streams:
+            print("Ryck: Stream has been excluded. Moving on.")
+        else:
+            stream_name = stream['channel']['name']
+            stream_status = stream['channel']['status']
+            stream_link = stream['channel']['url']
+            print('')
+            print('Ryck now playing: ' + stream_name)
+            print('                  ' + stream_status)
+            print('')
+            p = subprocess.Popen(
+                [
+                    'mpv',
+                    stream_link,
+                    '--input-conf=%s' % input_file,
+                    '--title=\"%s\"' % stream_status
+                ] + mpv_args
+            , shell=False)
+            p.communicate()
+
+            if p.returncode == 4:
+                sys.exit()
+
+            if p.returncode == 8:
+                print("Ryck: Excluding steam.")
+                with open(exclusion_file, 'a') as f:
+                    f.write(stream_link + '\n')
 
 ################################################################################
                           #     #    #    ### #     #
@@ -305,6 +337,7 @@ if __name__ == '__main__':
     parser.add_argument('--game', metavar='GAME', type=str, default='irl', help='Change the "game"-type twitch streams should be fetched from.')
     parser.add_argument('--lang', metavar='LANGUAGE', type=str, default='en', help='Change the language the stream should be in.')
     parser.add_argument('--max', metavar='MAX', type=int, default=0, help='Set how many streams should be fetched (0 or lower means all).')
+    parser.add_argument('--min', metavar='MIN', type=int, default=0, help='Set the minimal amount of views the streamer should have.')
     parser.add_argument('--sort', metavar='SORT', type=str, default='random', help='Sort streams to be played after "random" or anything else (which uses twitch default popularity sorting).')
 
     parser.add_argument('--gen-input', action='store_true', help='Ryck will generate a new input.conf and backup the old.')
@@ -325,6 +358,7 @@ if __name__ == '__main__':
     game = args.game
     lang = args.lang
     maximum = args.max
+    minimum = args.min
     sorting = args.sort
 
     if any(map(lambda x: "?" in x or "&" in x, [game, lang])):
@@ -363,4 +397,4 @@ if __name__ == '__main__':
         play_remember(work_dir, input_file, mpv_args)
 
     if not play_memory and not gen_input and not print_game and not print_lang:
-        play_default(input_file, lang, game, maximum, sorting, mpv_args)
+        play_default(work_dir, input_file, lang, game, maximum, minimum, sorting, mpv_args)
