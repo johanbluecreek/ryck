@@ -13,7 +13,7 @@
 #   ryck.py
 #   https://github.com/johanbluecreek/ryck
 #
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 #
 ################################################################################
 ################################################################################
@@ -221,7 +221,7 @@ def play_default(work_dir, input_file, lang, game, maximum, minimum, sorting, mp
         with open(exclusion_file, 'r') as f:
             lines = f.readlines()
             for line in lines:
-                excluded_streams.append(line)
+                excluded_streams.append(line.strip('\n'))
 
     # Fetch all the streams
     streams = []
@@ -285,7 +285,7 @@ def play_default(work_dir, input_file, lang, game, maximum, minimum, sorting, mp
     left = len(streams)
     for stream in streams:
 
-        print("Ryck: ", left)
+        print("Ryck: Streams left: ", left)
         left -= 1
 
         if stream['channel']['url'] in excluded_streams:

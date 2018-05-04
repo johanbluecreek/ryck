@@ -57,3 +57,4 @@ Generally this is suppose to be quite featureless, but some small goodies should
 
 * Perhaps integrate initiating irssi and jump into the chat
 * add more languages
+* Have a fuzzy search for keywords in "status"? (and exclusion)
