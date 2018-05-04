@@ -13,7 +13,7 @@
 #   ryck.py
 #   https://github.com/johanbluecreek/ryck
 #
-__version__ = "0.0.6"
+__version__ = "0.1.0"
 #
 ################################################################################
 ################################################################################
@@ -100,15 +100,9 @@ def create_input(work_dir):
         f.write('i show-text "${title}"\n')
         f.write('Ctrl+o run "/bin/bash" "-c" "xdg-open \\\"${path}\\\""\n')
 
-def allowed_game(game):
-    # Because we do not want the 'game' option to be misused (like using this
-    # script to call the twitch-api in an unintended way) we will have to check
-    # that the game given is an acceptable one. So here we list all the allowed
-    # games, and verify that the given game name is in that list.
-    # This is annying, because people would have to request having their games
-    # added but with twitch's way of handling things, this is the more
-    # comfrotable for me.
-    supported_games = {'',
+def known_games():
+
+    games = {'',
         'Anna',
         'Casino',
         'Counter-Strike: Global Offensive',
@@ -143,14 +137,18 @@ def allowed_game(game):
         'World of Tanks',
         'World of Warcraft'
     }
-    #TODO: Also figure out how to escape all the spaces ('+' instead of spaces)
-    # to get these to a acceptable url form. Ex: 'Pillars of Eternity' ->
-    # 'pillars+of+eternity'
 
-    return game in supported_games
+    print("Ryck: These are a bunch of 'game's that have been used.")
+    print("      There are more than these, and you have to escape characters yourself for now.")
+    print("      Example: 'Pillars of Eternity' yeilds correct game if entered as 'pillars+of+eternity'.\n")
+    print(games)
 
 def known_langs():
-    {'english': 'en', 'swedish': 'sv'}
+
+    langs = {'English': 'en', 'Swedish': 'sv'}
+
+    print("Ryck: You can try which every you want, but these are the ones that has been known to work:\n")
+    print(langs)
 
 
 ################################################################################
@@ -311,6 +309,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--gen-input', action='store_true', help='Ryck will generate a new input.conf and backup the old.')
 
+    parser.add_argument('--print-game', action='store_true', help='Prints known game options.')
+    parser.add_argument('--print-lang', action='store_true', help='Prints known language options.')
+
     parser.add_argument('--play-mem', action='store_true', help='Ryck will play the streams saved by user (`R` (`shift+r`)), available in `~/.ryck/remember`')
 
     parser.add_argument('--version', action='version', version='%(prog)s {}'.format(__version__), help="Prints version number and exits.")
@@ -326,7 +327,13 @@ if __name__ == '__main__':
     maximum = args.max
     sorting = args.sort
 
+    if any(map(lambda x: "?" in x or "&" in x, [game, lang])):
+        print("Ryck: Are you trying to manipulate the twitch-api call? Stop that!")
+        sys.exit()
+
     gen_input = args.gen_input
+    print_game = args.print_game
+    print_lang = args.print_lang
     play_memory = args.play_mem
 
     mpv_args = args.mpv[1:]
@@ -348,8 +355,12 @@ if __name__ == '__main__':
 
     if gen_input:
         create_input(work_dir)
+    if print_game:
+        known_games()
+    if print_lang:
+        known_langs()
     if play_memory:
         play_remember(work_dir, input_file, mpv_args)
 
-    if not play_memory and not gen_input:
+    if not play_memory and not gen_input and not print_game and not print_lang:
         play_default(input_file, lang, game, maximum, sorting, mpv_args)
