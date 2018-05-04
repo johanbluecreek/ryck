@@ -46,6 +46,8 @@ from datetime import date
 import time
 from shutil import copyfile
 
+import argparse as ap
+
 ################################################################################
       ####### #     # #     #  #####  ####### ### ####### #     #  #####
       #       #     # ##    # #     #    #     #  #     # ##    # #     #
@@ -147,6 +149,10 @@ def allowed_game(game):
 
     return game in supported_games
 
+def known_langs():
+    {'english': 'en', 'swedish': 'sv'}
+
+
 ################################################################################
                 #     #  #####  #######    #     #####  #######
                 #     # #     # #         # #   #     # #
@@ -165,7 +171,7 @@ def allowed_game(game):
 #    # #      #    # #    # #   #    #
 #    # ###### #    #  ####  #    #   #
 
-def play_remember(work_dir, input_file):
+def play_remember(work_dir, input_file, mpv_args):
     remember_file = work_dir + "/remember"
     memorised_streams = []
     if play_memory:
@@ -181,7 +187,7 @@ def play_remember(work_dir, input_file):
                         stream,
                         '--input-conf=%s' % input_file,
                         '--title=\"%s\"' % stream
-                    ]
+                    ] + mpv_args
                 , shell=False)
                 p.communicate()
 
@@ -201,7 +207,7 @@ def play_remember(work_dir, input_file):
 #    # #      #      #    # #    # #        #
 #####  ###### #      #    #  ####  ######   #
 
-def play_default(input_file, lang, game, maximum, sorting):
+def play_default(input_file, lang, game, maximum, sorting, mpv_args):
     # Hard coded limit of what the twitch-api accepts
     limit = 100
 
@@ -273,7 +279,7 @@ def play_default(input_file, lang, game, maximum, sorting):
                 stream_link,
                 '--input-conf=%s' % input_file,
                 '--title=\"%s\"' % stream_status
-            ]
+            ] + mpv_args
         , shell=False)
         p.communicate()
 
@@ -292,29 +298,58 @@ def play_default(input_file, lang, game, maximum, sorting):
 
 if __name__ == '__main__':
 
-    # Build a working env for ryck
+
+    ###  Resolve arguments  ###
+
+    parser = ap.ArgumentParser(usage='%(prog)s [options] [-- [mpv]]', description='Stream twitch streams instead of browsing them.')
+
+    # Optional arguemnts
+    parser.add_argument('--game', metavar='GAME', type=str, default='irl', help='Change the "game"-type twitch streams should be fetched from.')
+    parser.add_argument('--lang', metavar='LANGUAGE', type=str, default='en', help='Change the language the stream should be in.')
+    parser.add_argument('--max', metavar='MAX', type=int, default=0, help='Set how many streams should be fetched (0 or lower means all).')
+    parser.add_argument('--sort', metavar='SORT', type=str, default='random', help='Sort streams to be played after "random" or anything else (which uses twitch default popularity sorting).')
+
+    parser.add_argument('--gen-input', action='store_true', help='Ryck will generate a new input.conf and backup the old.')
+
+    parser.add_argument('--play-mem', action='store_true', help='Ryck will play the streams saved by user (`R` (`shift+r`)), available in `~/.ryck/remember`')
+
+    parser.add_argument('--version', action='version', version='%(prog)s {}'.format(__version__), help="Prints version number and exits.")
+
+    # Positional arguments
+    parser.add_argument('mpv', nargs=ap.REMAINDER, help='Arguments to pass to `mpv`.')
+
+    # Pass them to variables
+    args = parser.parse_args()
+
+    game = args.game
+    lang = args.lang
+    maximum = args.max
+    sorting = args.sort
+
+    gen_input = args.gen_input
+    play_memory = args.play_mem
+
+    mpv_args = args.mpv[1:]
+
+    ### Build a working env for ryck  ###
+
     work_dir = os.environ['HOME'] + "/.ryck"
     if not os.path.isdir(work_dir):
         os.mkdir(work_dir)
 
-    # Generate input file if non exist
+
+    ###  Generate input file if non exist  ###
+
     input_file = work_dir + "/input.conf"
     if not os.path.isfile(input_file):
         create_input(work_dir)
 
-    # Set preferences (TODO: Move to argparse)
-    lang = 'en'
-    game = 'irl'
-    maximum = 0
-    sorting = 'random'
+    ###  Start actually doing something  ###
 
-    # Go through all use cases (TODO: move to argparse)
-    play_memory = False
-    gen_input = True
-
-    if play_memory:
-        play_remember(work_dir, input_file)
-    elif gen_input:
+    if gen_input:
         create_input(work_dir)
-    else:
-        play_default(input_file, lang, game, maximum, sorting)
+    if play_memory:
+        play_remember(work_dir, input_file, mpv_args)
+
+    if not play_memory and not gen_input:
+        play_default(input_file, lang, game, maximum, sorting, mpv_args)
