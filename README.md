@@ -30,6 +30,11 @@ optional arguments:
   --lang LANGUAGE  Change the language the stream should be in.
   --max MAX        Set how many streams should be fetched (0 or lower means
                    all).
+  --min MIN        Set the minimal amount of views the streamer should have.
+  --exclude EXC    Comma separated list of words to exclude from streamers
+                   "status".
+  --only ONLY      Comma separated list of words that a streamer must have in
+                   "status".
   --sort SORT      Sort streams to be played after "random" or anything else
                    (which uses twitch default popularity sorting).
   --gen-input      Ryck will generate a new input.conf and backup the old.
