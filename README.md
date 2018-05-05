@@ -55,6 +55,6 @@ Ryck will generate a `input.conf`-file (to be stored in `~/.ryck/`) and override
 
 Generally this is suppose to be quite featureless, but some small goodies should be added
 
-* Perhaps integrate initiating irssi and jump into the chat
+* Some chat-integration (perhaps integrate initiating irssi and jump into the chat)
 * add more languages
-* Have a fuzzy search for keywords in "status"? (and exclusion)
+* Can the status be updated? (say you watch a stream for 2 hours, change, and the status may have changed. Updates in general I guess.)

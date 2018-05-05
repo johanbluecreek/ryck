@@ -13,7 +13,7 @@
 #   ryck.py
 #   https://github.com/johanbluecreek/ryck
 #
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 #
 ################################################################################
 ################################################################################
@@ -207,7 +207,7 @@ def play_remember(work_dir, input_file, mpv_args):
 #    # #      #      #    # #    # #        #
 #####  ###### #      #    #  ####  ######   #
 
-def play_default(work_dir, input_file, lang, game, maximum, minimum, sorting, mpv_args):
+def play_default(work_dir, input_file, lang, game, maximum, minimum, exclude, only, sorting, mpv_args):
     # Hard coded limit of what the twitch-api accepts
     limit = 100
 
@@ -270,10 +270,26 @@ def play_default(work_dir, input_file, lang, game, maximum, minimum, sorting, mp
 
             streams += copy.copy(data['streams'])
 
+    # Remove those with too low viewer count
     if minimum > 0:
         new_streams = []
         for stream in streams:
             if stream['viewers'] >= minimum:
+                new_streams.append(stream)
+        streams = new_streams
+
+    # Removed those containing excluded words
+    if not exclude == ['']:
+        new_streams = []
+        for stream in streams:
+            if not any(map(lambda x: x in stream['channel']['status'].lower(), exclude)):
+                new_streams.append(stream)
+        streams = new_streams
+
+    if not only == ['']:
+        new_streams = []
+        for stream in streams:
+            if all(map(lambda x: x in stream['channel']['status'].lower(), only)):
                 new_streams.append(stream)
         streams = new_streams
 
@@ -336,8 +352,13 @@ if __name__ == '__main__':
     # Optional arguemnts
     parser.add_argument('--game', metavar='GAME', type=str, default='irl', help='Change the "game"-type twitch streams should be fetched from.')
     parser.add_argument('--lang', metavar='LANGUAGE', type=str, default='en', help='Change the language the stream should be in.')
+
     parser.add_argument('--max', metavar='MAX', type=int, default=0, help='Set how many streams should be fetched (0 or lower means all).')
     parser.add_argument('--min', metavar='MIN', type=int, default=0, help='Set the minimal amount of views the streamer should have.')
+
+    parser.add_argument('--exclude', metavar='EXC', type=str, default="", help='Comma separated list of words to exclude from streamers "status".')
+    parser.add_argument('--only', metavar='ONLY', type=str, default="", help='Comma separated list of words that a streamer must have in "status".')
+
     parser.add_argument('--sort', metavar='SORT', type=str, default='random', help='Sort streams to be played after "random" or anything else (which uses twitch default popularity sorting).')
 
     parser.add_argument('--gen-input', action='store_true', help='Ryck will generate a new input.conf and backup the old.')
@@ -357,8 +378,13 @@ if __name__ == '__main__':
 
     game = args.game
     lang = args.lang
+
     maximum = args.max
     minimum = args.min
+
+    exclude = args.exclude.split(",")
+    only = args.only.split(",")
+
     sorting = args.sort
 
     if any(map(lambda x: "?" in x or "&" in x, [game, lang])):
@@ -397,4 +423,4 @@ if __name__ == '__main__':
         play_remember(work_dir, input_file, mpv_args)
 
     if not play_memory and not gen_input and not print_game and not print_lang:
-        play_default(work_dir, input_file, lang, game, maximum, minimum, sorting, mpv_args)
+        play_default(work_dir, input_file, lang, game, maximum, minimum, exclude, only, sorting, mpv_args)
